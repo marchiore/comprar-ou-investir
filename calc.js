@@ -1,58 +1,67 @@
+import Decimal from "decimal.js";
+
 const DEV_MODE =
   typeof window !== "undefined" &&
   (window.location.hostname === "localhost" ||
    window.location.hostname === "127.0.0.1");
+
+function toDecimal(value) {
+  return Decimal.isDecimal(value) ? value : new Decimal(value);
+}
+
+function toNumber(value) {
+  return Decimal.isDecimal(value) ? value.toNumber() : value;
+}
 
 
 // =======================
 // FINANCIAMENTO - PRICE
 // =======================
 export function calcularFinanciamentoPrice(valorFinanciado, taxaMensal, meses) {
-  const i = taxaMensal;
+  const valor = toDecimal(valorFinanciado);
+  const i = toDecimal(taxaMensal);
   const n = meses;
 
   let parcela;
 
-  if (i === 0) {
-    parcela = valorFinanciado / n;
+  if (i.eq(0)) {
+    parcela = valor.div(n);
   } else {
-    parcela =
-      valorFinanciado *
-      (i * Math.pow(1 + i, n)) /
-      (Math.pow(1 + i, n) - 1);
+    const fator = new Decimal(1).plus(i).pow(n);
+    parcela = valor.mul(i.mul(fator)).div(fator.minus(1));
   }
 
-  let saldo = valorFinanciado;
+  let saldo = valor;
 
   const parcelas = [];
   const amortizacoes = [];
   const jurosArr = [];
   const saldoDevedor = [];
 
-  let totalJuros = 0;
+  let totalJuros = new Decimal(0);
 
   for (let m = 0; m < meses; m++) {
-    const juros = saldo * i;
-    let amortizacao = parcela - juros;
+    const juros = saldo.mul(i);
+    let amortizacao = parcela.minus(juros);
 
     if (m === meses - 1) {
       amortizacao = saldo;
     }
 
-    saldo -= amortizacao;
+    saldo = saldo.minus(amortizacao);
 
-    parcelas.push(parcela);
-    amortizacoes.push(amortizacao);
-    jurosArr.push(juros);
-    saldoDevedor.push(Math.max(saldo, 0));
+    parcelas.push(toNumber(parcela));
+    amortizacoes.push(toNumber(amortizacao));
+    jurosArr.push(toNumber(juros));
+    saldoDevedor.push(Math.max(toNumber(saldo), 0));
 
-    totalJuros += juros;
+    totalJuros = totalJuros.plus(juros);
   }
 
   sanityCheckPrice({
-    valorFinanciado,
-    jurosTotal: totalJuros,
-    totalPago: valorFinanciado + totalJuros,
+    valorFinanciado: toNumber(valor),
+    jurosTotal: toNumber(totalJuros),
+    totalPago: toNumber(valor.plus(totalJuros)),
     prazoMeses: meses
   });
 
@@ -62,8 +71,8 @@ export function calcularFinanciamentoPrice(valorFinanciado, taxaMensal, meses) {
     juros: jurosArr,
     saldoDevedor,
 
-    totalJuros,
-    totalPago: valorFinanciado + totalJuros,
+    totalJuros: toNumber(totalJuros),
+    totalPago: toNumber(valor.plus(totalJuros)),
     primeiraParcela: parcelas[0] || 0,
     ultimaParcela: parcelas[parcelas.length - 1] || 0
   };
@@ -73,38 +82,40 @@ export function calcularFinanciamentoPrice(valorFinanciado, taxaMensal, meses) {
 // FINANCIAMENTO - SAC
 // =======================
 export function calcularFinanciamentoSAC(valorFinanciado, taxaMensal, meses) {
-  let amortizacaoBase = valorFinanciado / meses;
-  let saldo = valorFinanciado;
+  const valor = toDecimal(valorFinanciado);
+  const taxa = toDecimal(taxaMensal);
+  const amortizacaoBase = valor.div(meses);
+  let saldo = valor;
 
   const parcelas = [];
   const amortizacoes = [];
   const jurosArr = [];
   const saldoDevedor = [];
 
-  let totalJuros = 0;
+  let totalJuros = new Decimal(0);
 
   for (let i = 0; i < meses; i++) {
-    const juros = saldo * taxaMensal;
+    const juros = saldo.mul(taxa);
 
     let amortizacao =
       i === meses - 1 ? saldo : amortizacaoBase;
 
-    const parcela = amortizacao + juros;
+    const parcela = amortizacao.plus(juros);
 
-    saldo -= amortizacao;
+    saldo = saldo.minus(amortizacao);
 
-    parcelas.push(parcela);
-    amortizacoes.push(amortizacao);
-    jurosArr.push(juros);
-    saldoDevedor.push(Math.max(saldo, 0));
+    parcelas.push(toNumber(parcela));
+    amortizacoes.push(toNumber(amortizacao));
+    jurosArr.push(toNumber(juros));
+    saldoDevedor.push(Math.max(toNumber(saldo), 0));
 
-    totalJuros += juros;
+    totalJuros = totalJuros.plus(juros);
   }
 
   sanityCheckFinanciamentoSac({
-    valorFinanciado,
-    jurosTotal: totalJuros,
-    totalPago: valorFinanciado + totalJuros,
+    valorFinanciado: toNumber(valor),
+    jurosTotal: toNumber(totalJuros),
+    totalPago: toNumber(valor.plus(totalJuros)),
     prazoMeses: meses
   });
 
@@ -114,8 +125,8 @@ export function calcularFinanciamentoSAC(valorFinanciado, taxaMensal, meses) {
     juros: jurosArr,
     saldoDevedor,
 
-    totalJuros,
-    totalPago: valorFinanciado + totalJuros,
+    totalJuros: toNumber(totalJuros),
+    totalPago: toNumber(valor.plus(totalJuros)),
     primeiraParcela: parcelas[0] || 0,
     ultimaParcela: parcelas[parcelas.length - 1] || 0
   };
@@ -140,20 +151,22 @@ export function calcularSerieInvestimento(
   taxaMensal,
   meses
 ) {
-  let saldo = valorInicial;
+  const taxa = toDecimal(taxaMensal);
+  const aporte = toDecimal(aporteMensal);
+  let saldo = toDecimal(valorInicial);
   const serie = [];
-  let totalAportado = valorInicial;
+  let totalAportado = toDecimal(valorInicial);
 
   for (let i = 0; i < meses; i++) {
-    saldo = saldo * (1 + taxaMensal) + aporteMensal;
-    totalAportado += aporteMensal;
-    serie.push(saldo);
+    saldo = saldo.mul(new Decimal(1).plus(taxa)).plus(aporte);
+    totalAportado = totalAportado.plus(aporte);
+    serie.push(toNumber(saldo));
   }
 
   return {
     serie,
-    patrimonioFinal: saldo,
-    totalAportado
+    patrimonioFinal: toNumber(saldo),
+    totalAportado: toNumber(totalAportado)
   };
 }
 
