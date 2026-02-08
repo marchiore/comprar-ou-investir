@@ -1,0 +1,60 @@
+# =========================
+# NODE
+# =========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+
+# =========================
+# TESTES
+# =========================
+coverage/
+.vitest/
+
+# =========================
+# BUILD / DIST
+# =========================
+dist/
+build/
+out/
+.tmp/
+.temp/
+
+# =========================
+# ENV
+# =========================
+.env
+.env.local
+.env.*.local
+
+# =========================
+# EDITOR / IDE
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*.DS_Store
+
+# =========================
+# MACOS
+# =========================
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# =========================
+# LOGS
+# =========================
+logs/
+*.log
+
+# =========================
+# CACHE
+# =========================
+.cache/
+.parcel-cache/
+.eslintcache

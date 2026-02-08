@@ -1,0 +1,11 @@
+{
+  "devDependencies": {
+    "vitest": "^3.2.4"
+  },
+
+  "scripts": {
+    "test": "vitest",
+    "test:watch": "vitest --watch"
+  }
+
+}

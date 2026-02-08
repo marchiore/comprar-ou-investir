@@ -57,14 +57,14 @@ window.calcular = function() {
     const valorImovel = parseMoeda(document.getElementById('valorImovel').value);
     const valorEntrada = parseMoeda(document.getElementById('valorEntrada').value);
     const tipoFinanciamento = document.getElementById('tipoFinanciamento').value;
-    const taxaFinanciamento = parseFloat(document.getElementById('taxaFinanciamento').value.replace(',', '.')) / 100;
-    const prazoFinanciamento = parseInt(document.getElementById('prazoFinanciamento').value);
-    const taxaInvestimento = parseFloat(document.getElementById('taxaInvestimento').value.replace(',', '.')) / 100;
+    const taxaFinanciamentoAnual = parseFloat(document.getElementById('taxaFinanciamento').value.replace(',', '.')) / 100;
+    const prazoFinanciamento = parseInt(document.getElementById('prazoFinanciamento').value) * 12;
+    const taxaInvestimentoAnual = parseFloat(document.getElementById('taxaInvestimento').value.replace(',', '.')) / 100;
     const aporteMensal = parseMoeda(document.getElementById('aporteMensal').value);
     const prazoInvestimento = parseInt(document.getElementById('prazoInvestimento').value);
 
     // Validações
-    if (!valorImovel || !valorEntrada || !taxaFinanciamento || !prazoFinanciamento || !taxaInvestimento || !prazoInvestimento) {
+    if (!valorImovel || !valorEntrada || !taxaFinanciamentoAnual || !prazoFinanciamento || !taxaInvestimentoAnual || !prazoInvestimento) {
         alert('Por favor, preencha todos os campos!');
         return;
     }
@@ -77,11 +77,14 @@ window.calcular = function() {
     }
 
     // Calcular financiamento usando funções do calc.js
+    const taxaFinanciamentoMensal = Math.pow(1 + taxaFinanciamentoAnual, 1 / 12) - 1;
+    const taxaInvestimentoMensal = Math.pow(1 + taxaInvestimentoAnual, 1 / 12) - 1;
+
     let dadosFinanciamento;
     if (tipoFinanciamento === 'SAC') {
-        dadosFinanciamento = calcularFinanciamentoSAC(valorFinanciado, taxaFinanciamento, prazoFinanciamento);
+        dadosFinanciamento = calcularFinanciamentoSAC(valorFinanciado, taxaFinanciamentoMensal, prazoFinanciamento);
     } else {
-        dadosFinanciamento = calcularFinanciamentoPrice(valorFinanciado, taxaFinanciamento, prazoFinanciamento);
+        dadosFinanciamento = calcularFinanciamentoPrice(valorFinanciado, taxaFinanciamentoMensal, prazoFinanciamento);
     }
 
     const totalPago = dadosFinanciamento.parcelas.reduce((a, b) => a + b, 0);
@@ -89,9 +92,16 @@ window.calcular = function() {
     const patrimonioFinanciamento = valorImovel; // Após pagar, você tem o imóvel
 
     // Calcular investimento usando função do calc.js
-    const serieInvestimento = calcularSerieInvestimento(valorEntrada, aporteMensal, taxaInvestimento, prazoInvestimento);
-    const patrimonioInvestimento = serieInvestimento[serieInvestimento.length - 1];
-    const totalAportado = aporteMensal * prazoInvestimento;
+    const investimento = calcularSerieInvestimento(
+        valorEntrada,
+        aporteMensal,
+        taxaInvestimentoMensal,
+        prazoInvestimento
+    );
+    
+    const patrimonioInvestimento = investimento.patrimonioFinal;
+    const totalAportado = investimento.totalAportado - valorEntrada;
+    
     const rendimentoTotal = patrimonioInvestimento - valorEntrada - totalAportado;
 
     // Atualizar UI - Financiamento
@@ -107,53 +117,26 @@ window.calcular = function() {
     document.getElementById('patrimonioInvestimento').textContent = formatarMoeda(patrimonioInvestimento);
 
     // Comparação
-    const scenarioFinanciamento = document.getElementById('scenarioFinanciamento');
-    const scenarioInvestimento = document.getElementById('scenarioInvestimento');
     const diferencaInfo = document.getElementById('diferencaInfo');
+    const diferenca = patrimonioInvestimento - patrimonioFinanciamento;
+    const sinalDiferenca = diferenca >= 0 ? '+' : '-';
 
-    scenarioFinanciamento.classList.remove('winner');
-    scenarioInvestimento.classList.remove('winner');
-
-    let mensagem = '';
-    if (patrimonioInvestimento > patrimonioFinanciamento) {
-        scenarioInvestimento.classList.add('winner');
-        const diferenca = patrimonioInvestimento - patrimonioFinanciamento;
-        mensagem = `
-            <p style="font-size: 1.2rem; margin-bottom: 1rem;">
-                <strong>Investir é mais vantajoso!</strong> Você terá <span class="diff-badge diff-positive">${formatarMoeda(diferenca)}</span> a mais investindo do que comprando o imóvel.
-            </p>
-            <p style="color: var(--text-secondary);">
-                Considerando o mesmo período de ${prazoInvestimento} meses, investir o valor da entrada e fazer aportes mensais resulta em um patrimônio maior.
-            </p>
-        `;
-    } else {
-        scenarioFinanciamento.classList.add('winner');
-        const diferenca = patrimonioFinanciamento - patrimonioInvestimento;
-        mensagem = `
-            <p style="font-size: 1.2rem; margin-bottom: 1rem;">
-                <strong>Comprar é mais vantajoso!</strong> Você terá <span class="diff-badge diff-positive">${formatarMoeda(diferenca)}</span> a mais em patrimônio comprando o imóvel.
-            </p>
-            <p style="color: var(--text-secondary);">
-                Considerando o mesmo período de ${prazoFinanciamento} meses, comprar o imóvel resulta em um patrimônio maior do que investir.
-            </p>
-        `;
-    }
+    const mensagem = `
+        <p style="font-size: 1.1rem; margin-bottom: 1rem;">
+            <strong>Racional do cálculo</strong>
+        </p>
+        <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+            A comparação considera o mesmo horizonte de ${prazoInvestimento} meses. No financiamento, o patrimônio final é o valor do imóvel após a quitação. No investimento, o patrimônio final é o capital inicial somado aos aportes mensais, capitalizados pela taxa informada.
+        </p>
+        <p style="margin-bottom: 0.75rem;">
+            Diferença de patrimônio (Investimento − Financiamento): 
+            <span class="diff-badge diff-positive">${sinalDiferenca}${formatarMoeda(Math.abs(diferenca))}</span>
+        </p>
+        <p style="color: var(--text-secondary);">
+            Essa diferença apenas expressa a distância entre os patrimônios finais; a interpretação depende das premissas usadas.
+        </p>
+    `;
     diferencaInfo.innerHTML = mensagem;
-
-    // Preencher tabela de parcelas
-    const tbody = document.getElementById('tabelaBody');
-    tbody.innerHTML = '';
-    
-    for (let i = 0; i < Math.min(dadosFinanciamento.parcelas.length, 120); i++) {
-        const row = tbody.insertRow();
-        row.innerHTML = `
-            <td>${i + 1}</td>
-            <td>${formatarMoeda(dadosFinanciamento.parcelas[i])}</td>
-            <td>${formatarMoeda(dadosFinanciamento.juros[i])}</td>
-            <td>${formatarMoeda(dadosFinanciamento.amortizacoes[i])}</td>
-            <td>${formatarMoeda(dadosFinanciamento.saldoDevedor[i])}</td>
-        `;
-    }
 
     // Mostrar resultados
     document.getElementById('results').classList.add('active');
