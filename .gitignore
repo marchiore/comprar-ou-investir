@@ -58,3 +58,5 @@ logs/
 .cache/
 .parcel-cache/
 .eslintcache
+.vercel
+.env*.local
