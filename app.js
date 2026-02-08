@@ -61,7 +61,7 @@ window.calcular = function() {
     const prazoFinanciamento = parseInt(document.getElementById('prazoFinanciamento').value) * 12;
     const taxaInvestimentoAnual = parseFloat(document.getElementById('taxaInvestimento').value.replace(',', '.')) / 100;
     const aporteMensal = parseMoeda(document.getElementById('aporteMensal').value);
-    const prazoInvestimento = parseInt(document.getElementById('prazoInvestimento').value);
+    const prazoInvestimento = parseInt(document.getElementById('prazoInvestimento').value) * 12;
 
     // Validações
     if (!valorImovel || !valorEntrada || !taxaFinanciamentoAnual || !prazoFinanciamento || !taxaInvestimentoAnual || !prazoInvestimento) {
@@ -89,7 +89,7 @@ window.calcular = function() {
 
     const totalPago = dadosFinanciamento.parcelas.reduce((a, b) => a + b, 0);
     const totalJuros = dadosFinanciamento.juros.reduce((a, b) => a + b, 0);
-    const patrimonioFinanciamento = valorImovel; // Após pagar, você tem o imóvel
+    // const patrimonioFinanciamento = valorImovel; // Após pagar, você tem o imóvel
 
     // Calcular investimento usando função do calc.js
     const investimento = calcularSerieInvestimento(
@@ -108,7 +108,7 @@ window.calcular = function() {
     document.getElementById('valorFinanciado').textContent = formatarMoeda(valorFinanciado);
     document.getElementById('totalPago').textContent = formatarMoeda(totalPago + valorEntrada);
     document.getElementById('totalJuros').textContent = formatarMoeda(totalJuros);
-    document.getElementById('patrimonioFinanciamento').textContent = formatarMoeda(patrimonioFinanciamento);
+    // document.getElementById('patrimonioFinanciamento').textContent = formatarMoeda(patrimonioFinanciamento);
 
     // Atualizar UI - Investimento
     document.getElementById('capitalInicial').textContent = formatarMoeda(valorEntrada);
@@ -118,19 +118,15 @@ window.calcular = function() {
 
     // Comparação
     const diferencaInfo = document.getElementById('diferencaInfo');
-    const diferenca = patrimonioInvestimento - patrimonioFinanciamento;
-    const sinalDiferenca = diferenca >= 0 ? '+' : '-';
+    // const diferenca = patrimonioInvestimento - patrimonioFinanciamento;
+    // const sinalDiferenca = diferenca >= 0 ? '+' : '-';
 
     const mensagem = `
         <p style="font-size: 1.1rem; margin-bottom: 1rem;">
             <strong>Racional do cálculo</strong>
         </p>
         <p style="color: var(--text-secondary); margin-bottom: 1rem;">
-            A comparação considera o mesmo horizonte de ${prazoInvestimento} meses. No financiamento, o patrimônio final é o valor do imóvel após a quitação. No investimento, o patrimônio final é o capital inicial somado aos aportes mensais, capitalizados pela taxa informada.
-        </p>
-        <p style="margin-bottom: 0.75rem;">
-            Diferença de patrimônio (Investimento − Financiamento): 
-            <span class="diff-badge diff-positive">${sinalDiferenca}${formatarMoeda(Math.abs(diferenca))}</span>
+            O cálculo considera o mesmo horizonte de ${prazoInvestimento} meses. No investimento, o patrimônio final é o capital inicial somado aos aportes mensais, capitalizados pela taxa informada.
         </p>
         <p style="color: var(--text-secondary);">
             Essa diferença apenas expressa a distância entre os patrimônios finais; a interpretação depende das premissas usadas.

@@ -4,6 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora Financeira | Comprar vs Investir</title>
+    <meta name="description" content="Simulador financeiro para comparar compra de imóvel, financiamento e investimento com base em taxas e prazos.">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#0d0d0d">
+    <link rel="canonical" href="https://comprarouinvestir.app/">
+    <meta property="og:title" content="Calculadora Financeira | Comprar vs Investir">
+    <meta property="og:description" content="Simulador financeiro para comparar compra de imóvel, financiamento e investimento com base em taxas e prazos.">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="pt_BR">
+    <meta property="og:url" content="https://comprarouinvestir.app/">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Calculadora Financeira | Comprar vs Investir">
+    <meta name="twitter:description" content="Simulador financeiro para comparar compra de imóvel, financiamento e investimento com base em taxas e prazos.">
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         * {
@@ -322,6 +334,13 @@
             font-size: 1.5rem;
         }
 
+        .stat-value.negative {
+            color: var(--secondary);
+            background: rgba(255, 56, 100, 0.12);
+            padding: 0.25rem 0.6rem;
+            border-radius: 8px;
+        }
+
         .table-container {
             overflow-x: auto;
             margin-top: 2rem;
@@ -380,6 +399,65 @@
         .diff-negative {
             background: rgba(255, 56, 100, 0.2);
             color: var(--secondary);
+        }
+
+        .disclaimer-card {
+            border: 1px solid rgba(255, 214, 10, 0.45);
+            background: linear-gradient(135deg, rgba(255, 214, 10, 0.06) 0%, var(--bg-card) 100%);
+        }
+
+        .disclaimer-card details {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .disclaimer-card summary {
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .disclaimer-card summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .disclaimer-card summary::after {
+            content: '▼';
+            margin-left: auto;
+            font-size: 0.75rem;
+            color: var(--accent);
+            transition: transform 0.2s ease;
+        }
+
+        .disclaimer-card details[open] summary::after {
+            transform: rotate(180deg);
+        }
+
+        .disclaimer-content {
+            padding-top: 1rem;
+            display: grid;
+            gap: 1rem;
+        }
+
+        .disclaimer-title {
+            color: var(--accent);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .disclaimer-list {
+            padding-left: 1.25rem;
+            display: grid;
+            gap: 0.35rem;
+        }
+
+        .disclaimer-list strong {
+            color: var(--text-primary);
         }
 
         @media (max-width: 768px) {
@@ -458,7 +536,7 @@
                     <label>Prazo do Financiamento</label>
                     <div class="input-group">
                         <input type="number" id="prazoFinanciamento" class="input-with-suffix" placeholder="0" min="1">
-                        <span class="input-suffix">meses</span>
+                        <span class="input-suffix">anos</span>
                     </div>
                 </div>
             </div>
@@ -489,7 +567,7 @@
                     <label>Prazo do Investimento</label>
                     <div class="input-group">
                         <input type="number" id="prazoInvestimento" class="input-with-suffix" placeholder="0" min="1">
-                        <span class="input-suffix">meses</span>
+                        <span class="input-suffix">anos</span>
                     </div>
                 </div>
             </div>
@@ -512,11 +590,7 @@
                     </div>
                     <div class="stat-row">
                         <span class="stat-label">Total de Juros</span>
-                        <span class="stat-value" id="totalJuros">R$ 0,00</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Patrimônio Final</span>
-                        <span class="stat-value highlight" id="patrimonioFinanciamento">R$ 0,00</span>
+                        <span class="stat-value negative" id="totalJuros">R$ 0,00</span>
                     </div>
                 </div>
 
@@ -543,8 +617,37 @@
             </div>
 
             <div class="result-card">
-                <h3 class="scenario-title">📊 Análise Comparativa</h3>
+                <h3 class="scenario-title">📊 Racional do Cálculo</h3>
                 <div id="diferencaInfo"></div>
+            </div>
+
+            <div class="result-card disclaimer-card">
+                <details>
+                    <summary>⚠️ Avisos e premissas do simulador</summary>
+                    <div class="disclaimer-content">
+                        <div>
+                            <div class="disclaimer-title">Premissas do Cálculo</div>
+                            <ul class="disclaimer-list">
+                                <li><strong>O imóvel NÃO valoriza nem desvaloriza</strong> (patrimônio final = valor de compra)</li>
+                                <li>Não considera custos de manutenção, IPTU, condomínio</li>
+                                <li>Não considera custos de transação (escritura, registro, ITBI)</li>
+                                <li>Não considera Imposto de Renda sobre rendimentos do investimento</li>
+                                <li>Não considera inflação ou correção monetária</li>
+                                <li>Assume disciplina para aportar todos os meses pelo prazo completo</li>
+                                <li>Assume taxa de investimento constante ao longo do tempo</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <div class="disclaimer-title">Avisos Importantes</div>
+                            <ul class="disclaimer-list">
+                                <li><strong>Esta é uma simulação simplificada</strong> para fins educacionais</li>
+                                <li>Consulte um planejador financeiro antes de tomar decisões</li>
+                                <li><strong>Rentabilidade passada não garante rentabilidade futura</strong></li>
+                                <li>Cada caso é único e depende de diversos fatores pessoais</li>
+                            </ul>
+                        </div>
+                    </div>
+                </details>
             </div>
 
             <!-- Tabela de Parcelas -->
